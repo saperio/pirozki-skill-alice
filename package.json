@@ -1,0 +1,13 @@
+{
+  "name": "pirozki-skill-alice",
+  "version": "1.0.0",
+  "description": "Skill for Alice",
+  "main": "src/index.js",
+  "scripts": {},
+  "author": "SAPer",
+  "license": "MIT",
+  "dependencies": {
+    "fast-html-parser": "^1.0.1",
+    "node-fetch": "^2.1.2"
+  }
+}
