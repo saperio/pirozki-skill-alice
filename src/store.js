@@ -1,6 +1,6 @@
 const fs = require('fs').promises;
 
-module.exports = { init, set, get };
+module.exports = { init, set, get, update };
 
 
 let memory = {};
@@ -37,6 +37,18 @@ function get(db, id) {
 	}
 
 	return memory[db][id];
+}
+
+function update(db, id, val) {
+	if (!memory[db]) {
+		memory[db] = {};
+	}
+
+	if (!memory[db][id]) {
+		memory[db][id] = {};
+	}
+
+	set(db, id, { ...memory[db][id], ...val});
 }
 
 // internal api
