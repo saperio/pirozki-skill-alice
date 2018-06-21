@@ -30,7 +30,7 @@ function getRandomPieIdx(user) {
 		idxList = Array.from({length: 10}, (_, i) => i);
 	}
 
-	const pieIdx = idxList.splice(Math.random() * idxList.length, 1)[0];
+	const pieIdx = page * 10 + idxList.splice(Math.random() * idxList.length, 1)[0];
 	user.bestContext = { page, idxList };
 
 	return pieIdx;
