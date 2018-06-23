@@ -1,59 +1,29 @@
 const provider = require('./provider');
-const store = require('./store');
+const { getRandomPieIdx, checkPayload } = require('./utils');
 const {
-	DB_USERS,
 	STEP_NEW_USER,
 	STEP_NAME,
-	STEP_SECOND,
+	STEP_MAIN,
 	STEP_COMEBACK,
 	PAYLOAD_MORE,
 	PAYLOAD_TWO_IN_ROW,
 	PAYLOAD_THREE_IN_ROW
 } = require('./constants');
 
-function updateUser(user, data) {
-	store.update(DB_USERS, user.id, data);
-}
+module.exports = data => steps[data.user.step](data);
 
-function getRandomPieIdx(user) {
-	let { bestContext } = user;
-	if (!bestContext) {
-		bestContext = {
-			page: -1,
-			idxList: []
-		};
-	}
 
-	let { page, idxList } = bestContext;
-	if (!idxList.length) {
-		++page;
-		idxList = Array.from({length: 10}, (_, i) => i);
-	}
-
-	const pieIdx = page * 10 + idxList.splice(Math.random() * idxList.length, 1)[0];
-	user.bestContext = { page, idxList };
-
-	return pieIdx;
-}
-
-function checkPayload(payload, checkValue) {
-	if (!payload) {
-		return false;
-	}
-
-	return payload.value === checkValue;
-}
 
 //user.inRow = 2;
 
-module.exports = {
+const steps = {
 	[STEP_NEW_USER]: ({ user }) => {
 		user.step = STEP_NAME;
 		return 'Привет! Я читаю стишки пирожки, меня зовут Абырвалг, а тебя как?';
 	},
 
 	[STEP_NAME]: async ({ command, user }) => {
-		user.step = STEP_SECOND;
+		user.step = STEP_MAIN;
 
 		const button = {
 			title: 'Еще еще!!!',
@@ -81,7 +51,6 @@ module.exports = {
 			.replace('зовут', '')
 			.trim()
 		;
-
 		user.name = name;
 
 		const pies = await provider.search(name);
@@ -101,7 +70,7 @@ module.exports = {
 		};
 	},
 
-	[STEP_SECOND]: async ({ payload, command, user }) => {
+	[STEP_MAIN]: async ({ payload, command, user }) => {
 		// reject
 		if (
 			command.indexOf('хватит') !== -1,

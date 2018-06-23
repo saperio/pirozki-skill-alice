@@ -4,7 +4,7 @@ module.exports = {
 
 	STEP_NEW_USER: 0,
 	STEP_NAME: 1,
-	STEP_SECOND: 2,
+	STEP_MAIN: 2,
 	STEP_COMEBACK: 3,
 
 	PAYLOAD_MORE: 1,

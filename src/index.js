@@ -1,8 +1,9 @@
 const server = require('./server');
 const store = require('./store');
 const provider = require('./provider');
-const { DB_USERS } = require('./constants');
-const { createUser } = require('./utils');
+const steps = require('./steps');
+const { DB_USERS, STEP_COMEBACK } = require('./constants');
+const { createUser, preprocessPayload, preprocessCommand } = require('./utils');
 
 
 (async () => {
@@ -14,19 +15,39 @@ const { createUser } = require('./utils');
 
 
 async function handler(req) {
-	const { request, session } = req;
+	const { request, session, version } = req;
 	const { user_id } = session;
-	let user = store.get(DB_USERS, user_id);
+	const { payload } = request;
+	const command = request.command.toLowerCase();
 
+	let user = store.get(DB_USERS, user_id);
 	if (!user) {
 		user = createUser(user_id);
+	} else if(session.new) {
+		user.step = STEP_COMEBACK;
 	}
 
-	const answer = await think(request, session, user);
+	user.requestIdx++;
+	preprocessPayload(payload, user);
+	preprocessCommand(command, user);
+
+	let result = steps({ command, user, payload });
+	if (result instanceof Promise) {
+		result = await result;
+	}
+
+	if (typeof result === 'string') {
+		result = { text: result };
+	}
 
 	store.set(DB_USERS, user_id, user);
-	return answer;
-}
 
-async function think(request, session, user) {
+	return {
+		response: {
+			end_session: false,
+			...result
+		},
+		session,
+		version
+	};
 }
