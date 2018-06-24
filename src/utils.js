@@ -1,6 +1,6 @@
-const { STEP_NEW_USER, PAYLOAD_TWO_IN_ROW, PAYLOAD_THREE_IN_ROW } = require('./constants');
+const { STEP_NEW_USER } = require('./constants');
 
-module.exports = { createUser, getRandomPieIdx, checkPayload, preprocessPayload, preprocessCommand };
+module.exports = { createUser, nextStep, getRandomPieIdx, checkPayload };
 
 
 function createUser(id) {
@@ -10,6 +10,10 @@ function createUser(id) {
 		inRow: 1,
 		id
 	};
+}
+
+function nextStep(user, step) {
+	user.step = step;
 }
 
 function getRandomPieIdx(user) {
@@ -39,20 +43,4 @@ function checkPayload(payload, checkValue) {
 	}
 
 	return payload.value === checkValue;
-}
-
-function preprocessPayload(payload, user) {
-	if (checkPayload(payload, PAYLOAD_TWO_IN_ROW)) {
-		user.inRow = 2;
-	} else if (checkPayload(payload, PAYLOAD_THREE_IN_ROW)) {
-		user.inRow = 3;
-	}
-}
-
-function preprocessCommand(command, user) {
-	if (command.indexOf('по два') || command.indexOf('по две')) {
-		user.inRow = 2;
-	} else if (command.indexOf('по три')) {
-		user.inRow = 3;
-	}
 }

@@ -3,7 +3,7 @@ const store = require('./store');
 const provider = require('./provider');
 const steps = require('./steps');
 const { DB_USERS, STEP_COMEBACK } = require('./constants');
-const { createUser, preprocessPayload, preprocessCommand } = require('./utils');
+const { createUser } = require('./utils');
 
 
 (async () => {
@@ -28,16 +28,10 @@ async function handler(req) {
 	}
 
 	user.requestIdx++;
-	preprocessPayload(payload, user);
-	preprocessCommand(command, user);
 
-	let result = steps({ command, user, payload });
-	if (result instanceof Promise) {
-		result = await result;
-	}
-
-	if (typeof result === 'string') {
-		result = { text: result };
+	let response = await steps({ command, user, payload });
+	if (typeof response === 'string') {
+		response = { text: response };
 	}
 
 	store.set(DB_USERS, user_id, user);
@@ -45,7 +39,7 @@ async function handler(req) {
 	return {
 		response: {
 			end_session: false,
-			...result
+			...response
 		},
 		session,
 		version
