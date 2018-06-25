@@ -1,6 +1,6 @@
 const { STEP_NEW_USER } = require('./constants');
 
-module.exports = { createUser, nextStep, getRandomPieIdx, checkPayload };
+module.exports = { createUser, nextStep, getRandomPieIdx, checkPayload, setUserFlag, checkUserFlag };
 
 
 function createUser(id) {
@@ -8,6 +8,7 @@ function createUser(id) {
 		step: STEP_NEW_USER,
 		requestIdx: 0,
 		inRow: 1,
+		flag: 0,
 		id
 	};
 }
@@ -43,4 +44,12 @@ function checkPayload(payload, checkValue) {
 	}
 
 	return payload.value === checkValue;
+}
+
+function setUserFlag(user, flag) {
+	user.flag |= flag;
+}
+
+function checkUserFlag(user, flag) {
+	return !!(user.flag & flag);
 }

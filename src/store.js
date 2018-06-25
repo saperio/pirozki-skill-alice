@@ -8,14 +8,14 @@ let dirty = false;
 const dbFilename = './store.db';
 
 async function init() {
-	try {
+	/*try {
 		const raw = await fs.readFile(dbFilename);
 		memory = JSON.parse(raw);
 	} catch(e) {
 		dirty = true;
 	}
 
-	await check();
+	await check();*/
 }
 
 function set(db, id, val) {

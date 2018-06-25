@@ -1,5 +1,5 @@
 const provider = require('./provider');
-const { getRandomPieIdx, checkPayload, nextStep } = require('./utils');
+const { getRandomPieIdx, checkPayload, nextStep, setUserFlag, checkUserFlag } = require('./utils');
 const {
 	STEP_NEW_USER,
 	STEP_NAME,
@@ -7,7 +7,9 @@ const {
 	STEP_COMEBACK,
 	PAYLOAD_MORE,
 	PAYLOAD_TWO_IN_ROW,
-	PAYLOAD_THREE_IN_ROW
+	PAYLOAD_THREE_IN_ROW,
+	USER_FLAG_PROPOSE_ROW,
+	USER_FLAG_PROPOSE_SEARCH
 } = require('./constants');
 
 
@@ -60,9 +62,16 @@ module.exports = async function realsteps(data) {
 		text: stepMain(data)
 	};
 
-	// on third or more step propose to change rows
-	if (user.requestIdx >= 3 && !user.proposeRows) {
-		user.proposeRows = true;
+	if (step === STEP_COMEBACK) {
+		nextStep(user, STEP_MAIN);
+
+		response.text = `С возвращением!\n${response.text}`;
+		return response;
+	}
+
+	// on 3 or more step propose to change rows
+	if (user.requestIdx >= 3 && !checkUserFlag(user, USER_FLAG_PROPOSE_ROW)) {
+		setUserFlag(user, USER_FLAG_PROPOSE_ROW);
 
 		response.text += '\n\nА еще я могу читать по два или по три пирожка за раз, просто скажи «Давай по два»';
 		response.buttons = [
@@ -83,8 +92,9 @@ module.exports = async function realsteps(data) {
 		];
 	}
 
-	if (step === STEP_COMEBACK) {
-		response.text = `С возвращением!\n${response.text}`;
+	// on 5 or more step propose search
+	else if (user.requestIdx >= 5 && !checkUserFlag(user, USER_FLAG_PROPOSE_SEARCH)) {
+		setUserFlag(user, USER_FLAG_PROPOSE_SEARCH);
 	}
 
 	return response;
@@ -119,9 +129,10 @@ async function stepName({ user, command }) {
 
 	// cleanup name
 	const name = command
-		.replace('а', '')
-		.replace('меня', '')
-		.replace('зовут', '')
+		.replace('а ', '')
+		.replace('меня ', '')
+		.replace('зовут ', '')
+		.replace('я ', '')
 		.trim()
 	;
 	user.name = name;
@@ -151,7 +162,7 @@ function stepMain({ user }) {
 		const pieIdx = getRandomPieIdx(user);
 		const { text } = provider.best(pieIdx);
 
-		resText += i !== 0 ? `\n${text}` : text;
+		resText += i !== 0 ? `\n\n${text}` : text;
 	}
 
 	return resText;

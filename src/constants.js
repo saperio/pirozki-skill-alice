@@ -1,6 +1,10 @@
 
 module.exports = {
 	DB_USERS: 'users',
+	DB_PIES: 'pies',
+
+	USER_FLAG_PROPOSE_ROW: 1,
+	USER_FLAG_PROPOSE_SEARCH: 2,
 
 	STEP_NEW_USER: 0,
 	STEP_NAME: 1,
