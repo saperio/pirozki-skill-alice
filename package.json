@@ -4,7 +4,8 @@
   "description": "Skill for Alice",
   "main": "src/index.js",
   "scripts": {
-    "start": "node ./src/index"
+    "start": "node ./src/index",
+    "deploy": "now --public --no-clipboard && now alias && now rm pirozki-skill-alice --safe --yes"
   },
   "author": "SAPer",
   "license": "MIT",
