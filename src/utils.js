@@ -1,6 +1,6 @@
 const { STEP_NEW_USER } = require('./constants');
 
-module.exports = { createUser, nextStep, getRandomPieIdx, checkPayload, setUserFlag, checkUserFlag };
+module.exports = { createUser, nextStep, getRandomPieIdx, setUserFlag, checkUserFlag };
 
 
 function createUser(id) {
@@ -36,14 +36,6 @@ function getRandomPieIdx(user) {
 	user.bestContext = { page, idxList };
 
 	return pieIdx;
-}
-
-function checkPayload(payload, checkValue) {
-	if (!payload) {
-		return false;
-	}
-
-	return payload.value === checkValue;
 }
 
 function setUserFlag(user, flag) {

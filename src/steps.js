@@ -1,5 +1,5 @@
 const provider = require('./provider');
-const { getRandomPieIdx, checkPayload, nextStep, setUserFlag, checkUserFlag } = require('./utils');
+const { getRandomPieIdx, nextStep, setUserFlag, checkUserFlag } = require('./utils');
 const {
 	STEP_NEW_USER,
 	STEP_NAME,
@@ -13,7 +13,7 @@ const {
 } = require('./constants');
 
 
-module.exports = async function realsteps(data) {
+module.exports = async function (data) {
 	const { payload, command, user } = data;
 	const { step } = user;
 
@@ -40,17 +40,10 @@ module.exports = async function realsteps(data) {
 	}
 
 	// process payload
-	if (payload) {
-		if (checkPayload(payload, PAYLOAD_MORE)) {
-		} else if (checkPayload(payload, PAYLOAD_TWO_IN_ROW)) {
-			user.inRow = 2;
-		} else if (checkPayload(payload, PAYLOAD_THREE_IN_ROW)) {
-			user.inRow = 3;
-		}
-	}
+	processPayload(user, payload);
 
 	// preprocess command
-	else {
+	{
 		if (command.indexOf('по два') || command.indexOf('по две')) {
 			user.inRow = 2;
 		} else if (command.indexOf('по три')) {
@@ -59,7 +52,7 @@ module.exports = async function realsteps(data) {
 	}
 
 	let response = {
-		text: stepMain(data)
+		text: getPies(user)
 	};
 
 	if (step === STEP_COMEBACK) {
@@ -154,7 +147,7 @@ async function stepName({ user, command }) {
 	};
 }
 
-function stepMain({ user }) {
+function getPies(user) {
 	const { inRow } = user;
 
 	let resText = '';
@@ -166,4 +159,23 @@ function stepMain({ user }) {
 	}
 
 	return resText;
+}
+
+function processPayload(user, payload) {
+	if (!payload) {
+		return;
+	}
+
+	switch (payload.value) {
+		case PAYLOAD_MORE:
+			break;
+
+		case PAYLOAD_TWO_IN_ROW:
+			user.inRow = 2;
+			break;
+
+		case PAYLOAD_THREE_IN_ROW:
+			user.inRow = 3;
+			break;
+	}
 }
