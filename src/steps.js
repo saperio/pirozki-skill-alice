@@ -1,10 +1,12 @@
 const provider = require('./provider');
-const { getRandomPieIdx, nextStep, setUserFlag, checkUserFlag } = require('./utils');
+const { getRandomPieIdx, nextStep, setUserFlag, checkUserFlag, checkCommand } = require('./utils');
 const {
 	STEP_NEW_USER,
 	STEP_NAME,
 	STEP_MAIN,
 	STEP_COMEBACK,
+	STEP_SEARCH,
+	STEP_SEARCH_BEGIN,
 	PAYLOAD_MORE,
 	PAYLOAD_TWO_IN_ROW,
 	PAYLOAD_THREE_IN_ROW,
@@ -14,54 +16,99 @@ const {
 
 
 module.exports = async function (data) {
-	const { payload, command, user } = data;
+	const { command, user } = data;
 	const { step } = user;
 
-	// first step
-	if (step === STEP_NEW_USER) {
-		return stepNewUser(data);
-	}
-
-	// second step
-	if (step === STEP_NAME) {
-		return await stepName(data);
-	}
-
-	// process reject
-	if (
-		command.indexOf('хватит') !== -1,
-		command.indexOf('стоп') !== -1,
-		command.indexOf('достаточно') !== -1
-	) {
+	// check reject
+	if (checkCommand(command, ['хватит', 'стоп', 'достаточно'])) {
 		return {
 			text: 'До встречи, приходи еще!',
 			end_session: true
 		}
 	}
 
-	// process payload
-	processPayload(user, payload);
+	preProcessData(data);
 
-	// preprocess command
-	{
-		if (command.indexOf('по два') || command.indexOf('по две')) {
-			user.inRow = 2;
-		} else if (command.indexOf('по три')) {
-			user.inRow = 3;
+	let response = {};
+	switch(step) {
+		case STEP_NEW_USER:
+			response = stepNewUser(data);
+			break;
+
+		case STEP_NAME:
+			response = await stepName(data);
+			break;
+
+		case STEP_COMEBACK:
+			response = await stepComeback(data);
+			break;
+
+		case STEP_SEARCH_BEGIN:
+			response = await stepSearchBegin(data);
+			break;
+
+		case STEP_SEARCH:
+			response = await stepSearch(data);
+			break;
+
+		case STEP_MAIN:
+			response = await stepMain(data);
+			break;
+	}
+
+	response = postProcessData(data, response);
+	response = makeTTS(response);
+
+	return response;
+};
+
+function preProcessData(data) {
+	const { command, user, payload } = data;
+
+	// first of all - check payload, for user pressed buttons
+	if (payload) {
+		switch (payload.value) {
+			case PAYLOAD_MORE:
+				break;
+
+			case PAYLOAD_TWO_IN_ROW:
+				user.inRow = 2;
+				break;
+
+			case PAYLOAD_THREE_IN_ROW:
+				user.inRow = 3;
+				break;
 		}
 	}
 
-	let response = {
-		text: getPies(user)
-	};
-
-	if (step === STEP_COMEBACK) {
+	// then check for predefined commands
+	if (checkCommand(command, ['по два', 'по две'])) {
+		user.inRow = 2;
+	} else if (checkCommand(command, ['по три'])) {
+		user.inRow = 3;
+	} else if (checkCommand(command, ['давай лучшее', 'давай лучшие'])) {
 		nextStep(user, STEP_MAIN);
+	} else {
+		const searchFlagIdx = command.indexOf('давай про');
+		if (searchFlagIdx !== -1) {
+			user.search = command
+				.substring(searchFlagIdx + 9)
+				.trim()
+			;
 
-		response.text = `С возвращением!\n${response.text}`;
+			nextStep(user, STEP_SEARCH_BEGIN);
+		}
+	}
+}
+
+function postProcessData(data, response) {
+	const { user } = data;
+
+	if (user.step !== STEP_MAIN) {
 		return response;
 	}
 
+	// and then make some purposes:
 	// on 3 or more step propose to change rows
 	if (user.requestIdx >= 3 && !checkUserFlag(user, USER_FLAG_PROPOSE_ROW)) {
 		setUserFlag(user, USER_FLAG_PROPOSE_ROW);
@@ -85,38 +132,46 @@ module.exports = async function (data) {
 		];
 	}
 
-	// on 5 or more step propose search
-	else if (user.requestIdx >= 5 && !checkUserFlag(user, USER_FLAG_PROPOSE_SEARCH)) {
+	// on 4 or more step propose search
+	else if (user.requestIdx >= 4 && !checkUserFlag(user, USER_FLAG_PROPOSE_SEARCH)) {
 		setUserFlag(user, USER_FLAG_PROPOSE_SEARCH);
+		response.text += '\n\nЯ могу поискать пирожки на какую-нибудь тему, просто скажи «Давай про...»';
 	}
 
 	return response;
 }
 
-function stepNewUser({ user }) {
-	nextStep(user, STEP_NAME);
-	return 'Привет! Я читаю стишки пирожки, меня зовут Абырвалг, а тебя как?';
+function makeTTS(response) {
+	return response;
 }
 
-async function stepName({ user, command }) {
-	nextStep(user, STEP_MAIN);
+function stepNewUser({ user }) {
+	nextStep(user, STEP_NAME);
 
-	const button = {
+	return {
+		text: 'Привет! Я читаю стишки пирожки, меня зовут Абырвалг, а тебя как?'
+	};
+}
+
+async function stepName(data) {
+	const { user, command } = data;
+	const buttons = [{
 		title: 'Еще еще!!!',
 		hide: true,
 		payload: {
 			value: PAYLOAD_MORE
 		}
-	};
+	}];
+
+	nextStep(user, STEP_MAIN);
 
 	// reject
-	if (command.indexOf('не ') !== -1 || command.indexOf('нет ') !== -1 || command === 'нет') {
-		const pieIdx = getRandomPieIdx(user);
-		const { text } = provider.best(pieIdx);
+	if (checkCommand(command, ['не ', 'нет ']) || command === 'нет') {
+		const pies = await getPies(data);
 
 		return {
-			text: `Ладно, вот тебе первый пирожок!\n${text}\n\nЕще?`,
-			buttons: [button]
+			text: `Ладно, вот тебе первый пирожок!\n\n${pies}\n\nЕще?`,
+			buttons
 		};
 	}
 
@@ -130,52 +185,61 @@ async function stepName({ user, command }) {
 	;
 	user.name = name;
 
-	const pies = await provider.search(name);
-	if (pies.length) {
+	const search = await provider.search(name);
+	if (search.length) {
 		return {
-			text: `${pies[0].text}\n\nЕще?`,
-			buttons: [button]
+			text: `${search[0].text}\n\nЕще?`,
+			buttons
 		};
 	}
 
-	const pieIdx = getRandomPieIdx(user);
-	const { text } = await provider.best(pieIdx);
-
+	const pies = await getPies(data);
 	return {
-		text: `${text}\n\nЕще?`,
-		buttons: [button]
+		text: `${pies}\n\nЕще?`,
+		buttons
 	};
 }
 
-function getPies(user) {
+async function stepComeback(data) {
+	const pies = await getPies(data);
+	const { user } = data;
+
+	nextStep(user, STEP_MAIN);
+
+	return {
+		text: `С возвращением!\n\n${pies}`
+	};
+}
+
+async function stepMain(data) {
+	const pies = await getPies(data);
+	return {
+		text: pies
+	};
+}
+
+async function stepSearchBegin(data) {
+	const { user } = data;
+	const { search } = user;
+
+	const result = await provider.search(search, 0);
+	if (!result.length) {
+		return {
+			text: `К сожалению ничего про «${search}» не нашлось. Попробуй выбрать что-то другое или просто скажи «Давай лучшее»`
+		}
+	}
+}
+
+async function getPies({ user }) {
 	const { inRow } = user;
 
 	let resText = '';
 	for (let i = 0; i < inRow; ++i) {
 		const pieIdx = getRandomPieIdx(user);
-		const { text } = provider.best(pieIdx);
+		const { text } = await provider.best(pieIdx);
 
 		resText += i !== 0 ? `\n\n${text}` : text;
 	}
 
 	return resText;
-}
-
-function processPayload(user, payload) {
-	if (!payload) {
-		return;
-	}
-
-	switch (payload.value) {
-		case PAYLOAD_MORE:
-			break;
-
-		case PAYLOAD_TWO_IN_ROW:
-			user.inRow = 2;
-			break;
-
-		case PAYLOAD_THREE_IN_ROW:
-			user.inRow = 3;
-			break;
-	}
 }
