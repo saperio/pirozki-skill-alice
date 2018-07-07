@@ -7,6 +7,7 @@ const {
 	STEP_COMEBACK,
 	STEP_SEARCH,
 	STEP_SEARCH_BEGIN,
+	STEP_UNKNOWN,
 	PAYLOAD_MORE,
 	PAYLOAD_TWO_IN_ROW,
 	PAYLOAD_THREE_IN_ROW,
@@ -99,6 +100,10 @@ function preProcessData(data) {
 			nextStep(user, STEP_SEARCH_BEGIN);
 		}
 	}
+
+	if (user.step === STEP_UNKNOWN) {
+		nextStep(user, STEP_MAIN);
+	}
 }
 
 function postProcessData(data, response) {
@@ -185,10 +190,10 @@ async function stepName(data) {
 	;
 	user.name = name;
 
-	const search = await provider.search(name);
-	if (search.length) {
+	const search = await provider.search(name, 0);
+	if (search) {
 		return {
-			text: `${search[0].text}\n\nЕще?`,
+			text: `${search.text}\n\nЕще?`,
 			buttons
 		};
 	}
@@ -223,23 +228,67 @@ async function stepSearchBegin(data) {
 	const { search } = user;
 
 	const result = await provider.search(search, 0);
-	if (!result.length) {
+	if (!result) {
+		nextStep(user, STEP_UNKNOWN);
+		user.search = null;
+
 		return {
 			text: `К сожалению ничего про «${search}» не нашлось. Попробуй выбрать что-то другое или просто скажи «Давай лучшее»`
 		}
 	}
+
+	nextStep(user, STEP_SEARCH);
+	user.searchIdx = 0;
+
+	return {
+		text: `Про «${search}» кое-что есть:\n${result.text}\n\nКогда надоест, попробуй выбрать что-то другое или просто скажи «Давай лучшее»`,
+		buttons: [{
+			title: 'Еще!',
+			hide: true,
+			payload: {
+				value: PAYLOAD_MORE
+			}
+		}]
+	};
+}
+
+async function stepSearch(data) {
+	const { user } = data;
+	const { search } = user;
+
+	const result = await provider.search(search, ++user.searchIdx);
+	if (!result) {
+		nextStep(user, STEP_UNKNOWN);
+		user.search = null;
+		user.searchIdx = null;
+
+		return {
+			text: `Про «${search}» это все. Можно поискать пирожки про что-то другое или просто скажи «Давай лучшее»`
+		};
+	}
+
+	return {
+		text: result.text,
+		buttons: [{
+			title: 'Еще!',
+			hide: true,
+			payload: {
+				value: PAYLOAD_MORE
+			}
+		}]
+	};
 }
 
 async function getPies({ user }) {
 	const { inRow } = user;
 
-	let resText = '';
+	const pies = [];
 	for (let i = 0; i < inRow; ++i) {
 		const pieIdx = getRandomPieIdx(user);
 		const { text } = await provider.best(pieIdx);
 
-		resText += i !== 0 ? `\n\n${text}` : text;
+		pies.push(text);
 	}
 
-	return resText;
+	return pies.join('\n\n');
 }
