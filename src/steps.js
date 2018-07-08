@@ -1,5 +1,5 @@
 const provider = require('./provider');
-const { getRandomPieIdx, nextStep, setUserFlag, checkUserFlag, checkCommand } = require('./utils');
+const { getRandomPieIdx, resetRandomPieIdx, nextStep, setUserFlag, checkUserFlag, checkCommand } = require('./utils');
 const {
 	STEP_NEW_USER,
 	STEP_NAME,
@@ -147,6 +147,21 @@ function postProcessData(data, response) {
 }
 
 function makeTTS(response) {
+	const { text } = response;
+	const list = [
+		['съебя', 'съеб+я'],
+		['нахуй', 'н+ахуй']
+	];
+
+	let tts = text;
+	for (let [search, replace] of list) {
+		tts = tts.replace(new RegExp(search, 'g'), replace);
+	}
+
+	if (text !== tts) {
+		response.tts = tts;
+	}
+
 	return response;
 }
 
@@ -285,9 +300,14 @@ async function getPies({ user }) {
 	const pies = [];
 	for (let i = 0; i < inRow; ++i) {
 		const pieIdx = getRandomPieIdx(user);
-		const { text } = await provider.best(pieIdx);
+		let pie = await provider.best(pieIdx);
+		if (!pie) {
+			resetRandomPieIdx(user);
+			pies.push('Ого, у меня кончились лучшие пирожки, начну сначала пожалуй!');
+			break;
+		}
 
-		pies.push(text);
+		pies.push(pie.text);
 	}
 
 	return pies.join('\n\n');
