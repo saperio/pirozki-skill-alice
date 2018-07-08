@@ -1,7 +1,8 @@
 
 module.exports = {
 	DB_USERS: 'users',
-	DB_PIES: 'pies',
+	DB_PIES_BEST: 'pies_best',
+	DB_PIES_SEARCH: 'pies_search',
 
 	USER_FLAG_PROPOSE_ROW: 1,
 	USER_FLAG_PROPOSE_SEARCH: 2,

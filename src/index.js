@@ -1,6 +1,5 @@
 const server = require('./server');
 const store = require('./store');
-const provider = require('./provider');
 const steps = require('./steps');
 const { DB_USERS, STEP_COMEBACK } = require('./constants');
 const { createUser } = require('./utils');
@@ -8,8 +7,6 @@ const { createUser } = require('./utils');
 
 (async () => {
 	await store.init();
-	await provider.init();
-
 	server(handler);
 })();
 

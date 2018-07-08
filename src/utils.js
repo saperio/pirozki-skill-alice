@@ -1,6 +1,7 @@
+const hash = require('crypto').createHash;
 const { STEP_NEW_USER } = require('./constants');
 
-module.exports = { createUser, nextStep, getRandomPieIdx, setUserFlag, checkUserFlag, checkCommand };
+module.exports = { createUser, nextStep, getRandomPieIdx, setUserFlag, checkUserFlag, checkCommand, getHash };
 
 
 function createUser(id) {
@@ -48,4 +49,8 @@ function checkUserFlag(user, flag) {
 
 function checkCommand(command, terms) {
 	return terms.some(term => command.indexOf(term) !== -1);
+}
+
+function getHash(str) {
+	return hash('sha1').update(str).digest('hex');
 }

@@ -1,41 +1,11 @@
 const fetch = require('node-fetch');
 const htmlParser = require('fast-html-parser');
 const store = require('./store');
-const { DB_PIES } = require('./constants');
+const { getHash } = require('./utils');
+const { DB_PIES_BEST, DB_PIES_SEARCH } = require('./constants');
 
 
-module.exports = { init, best, search };
-
-async function init() {
-	/*console.log('Init provider...');
-
-	let best = store.get(DB_PIES, 'best');
-	if (best) {
-		return;
-	}
-
-	best = [];
-	for (let page = 0; page < 2; ++page) {
-		best = best.concat(await fetchBest(page));
-	}
-
-	store.set(DB_PIES, 'best', best);
-
-	console.log(`fetch ${best.length} best pies`);
-	*/
-
-	const pies = await search('Антон');
-	console.log(`fetch ${pies.length} pies:\n\n${pies[0].text}`);
-}
-
-async function fetchBest(page) {
-	const url = `http://poetory.ru/content/list?sort=rate&page=${page + 1}&per-page=30`;
-	const best = await fetchPage(url);
-
-	if (!best.length) {
-		throw 'Can\'t parse best list';
-	}
-}
+module.exports = { best, search };
 
 async function fetchPage(url) {
 	const raw = await fetch(url);
@@ -59,17 +29,55 @@ async function fetchPage(url) {
 	});
 }
 
-function best(pieIdx) {
-	const best = store.get(DB_PIES, 'best');
+async function best(pieIdx) {
+	const pageSize = 30;
+	const pageIdx = 1 + (pieIdx / pageSize) | 0;
+	const pageId = `page${pageIdx}`;
 
-	return best[pieIdx];
-}
+	let page = store.get(DB_PIES_BEST, pageId);
+	if (!page) {
+		const url = `http://poetory.ru/content/list?sort=rate&page=${pageIdx}&per-page=30`;
+		page = await fetchPage(url);
 
-async function search(term) {
-	if ((/[<>;:(){}@$%&?*/\\]/g).test(term)) {
-		return [];
+		store.set(DB_PIES_BEST, pageId, page);
 	}
 
-	const url = `http://poetory.ru/content/list?sort=likes&query=${encodeURIComponent(term)}`;
-	return await fetchPage(url);
+	const idx = pieIdx % pageSize;
+	if (idx >= page.length) {
+		return null;
+	}
+
+	return page[idx];
+}
+
+async function search(term, searchIdx) {
+	if ((/[<>;:(){}@$%&?*/\\]/g).test(term)) {
+		return null;
+	}
+
+	const pageSize = 30;
+	const pageIdx = 1 + (searchIdx / pageSize) | 0;
+	const pageId = `page${pageIdx}`;
+	const searchId = getHash(term);
+
+	let cache = store.get(DB_PIES_SEARCH, searchId);
+	if (!cache) {
+		cache = { pages: {} };
+	}
+
+	let page = cache.pages[pageId];
+	if (!page) {
+		const url = `http://poetory.ru/content/list?sort=likes&query=${encodeURIComponent(term)}&page=${pageIdx}&per-page=30`;
+		page = await fetchPage(url);
+
+		cache.pages[pageId] = page;
+		store.set(DB_PIES_SEARCH, searchId, cache);
+	}
+
+	const idx = searchIdx % pageSize;
+	if (idx >= page.length) {
+		return null;
+	}
+
+	return page[idx];
 }
