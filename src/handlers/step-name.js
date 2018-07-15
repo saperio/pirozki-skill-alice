@@ -42,9 +42,9 @@ module.exports = async function stepName({ user, command }) {
 		};
 	}
 
-	const pies = await best(data);
+	const pies = await best(user);
 	return {
-		text: `${pies}\n\nЕще?`,
+		text: `Класс! Ну поехали:\n\n${pies}\n\nЕще?`,
 		buttons
 	};
 }

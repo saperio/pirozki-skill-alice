@@ -5,6 +5,6 @@ module.exports = function stepNewUser({ user }) {
 	nextStep(user, STEP_NAME);
 
 	return {
-		text: 'Привет! Я читаю стишки пирожки, меня зовут Абырвалг, а тебя как?'
+		text: 'Привет! Я читаю лучшие стишки пирожки, меня зовут Абырвалг, а тебя как?'
 	};
 }

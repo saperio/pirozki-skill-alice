@@ -23,7 +23,6 @@ const stepMain = require('./handlers/step-main');
 
 module.exports = async function steps(data) {
 	const { command, user } = data;
-	const { step } = user;
 
 	// check reject
 	if (checkCommand(command, ['хватит', 'стоп', 'достаточно'])) {
@@ -36,7 +35,7 @@ module.exports = async function steps(data) {
 	preProcessData(data);
 
 	let response = {};
-	switch(step) {
+	switch(user.step) {
 		case STEP_NEW_USER:
 			response = stepNewUser(data);
 			break;

@@ -14,7 +14,7 @@ module.exports = async function stepSearch({ user }) {
 	}
 
 	return {
-		text: result.text,
+		text: result,
 		buttons: [{
 			title: 'Еще!',
 			hide: true,

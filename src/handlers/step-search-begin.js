@@ -15,7 +15,7 @@ module.exports = async function stepSearchBegin({ user }) {
 
 	nextStep(user, STEP_SEARCH);
 	return {
-		text: `Про «${term}» кое-что есть:\n${result}\n\nКогда надоест, попробуй выбрать что-то другое или просто скажи «Давай лучшее»`,
+		text: `Про «${term}» кое-что есть:\n\n${result}\n\nКогда надоест, попробуй выбрать что-то другое или просто скажи «Давай лучшее»`,
 		buttons: [{
 			title: 'Еще!',
 			hide: true,

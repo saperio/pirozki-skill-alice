@@ -42,6 +42,6 @@ function ask(respText, handler, newSession = false) {
 			text += `\n${buttonsText}`;
 		}
 
-		ask(`--------------${text}--------------`, handler);
+		ask(`--------------\n${text}\n--------------`, handler);
 	});
 }
