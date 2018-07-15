@@ -7,9 +7,15 @@ const { createUser } = require('./utils');
 
 (async () => {
 	await store.init();
+
+	if (process.argv[2] === '--pirocli') {
+		const cli = require('./cli');
+		cli(handler);
+		return;
+	}
+
 	server(handler);
 })();
-
 
 async function handler(req) {
 	const { request, session, version } = req;
@@ -20,17 +26,12 @@ async function handler(req) {
 	let user = store.get(DB_USERS, user_id);
 	if (!user) {
 		user = createUser(user_id);
-	} else if(session.new) {
+	} else if (session.new) {
 		user.step = STEP_COMEBACK;
 	}
-
 	user.requestIdx++;
 
-	let response = await steps({ command, user, payload });
-	if (typeof response === 'string') {
-		response = { text: response };
-	}
-
+	const response = await steps({ command, user, payload });
 	store.set(DB_USERS, user_id, user);
 
 	return {
