@@ -1,6 +1,6 @@
 const http = require('http');
 
-module.exports = handler => {
+module.exports = function server(handler) {
 	const server = http.createServer((req, res) => {
 		const { url, method } = req;
 

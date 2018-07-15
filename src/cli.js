@@ -5,7 +5,7 @@ const rl = readline.createInterface({
 });
 
 
-module.exports = function (handler) {
+module.exports = function cli(handler) {
 	ask('Hi!', handler, true);
 }
 

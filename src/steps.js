@@ -1,5 +1,4 @@
-const provider = require('./provider');
-const { getRandomPieIdx, resetRandomPieIdx, nextStep, setUserFlag, checkUserFlag, checkCommand } = require('./utils');
+const { nextStep, setUserFlag, checkUserFlag, checkCommand } = require('./utils');
 const {
 	STEP_NEW_USER,
 	STEP_NAME,
@@ -14,9 +13,15 @@ const {
 	USER_FLAG_PROPOSE_ROW,
 	USER_FLAG_PROPOSE_SEARCH
 } = require('./constants');
+const stepNewUser = require('./handlers/step-new-user');
+const stepName = require('./handlers/step-name');
+const stepComeback = require('./handlers/step-comeback');
+const stepSearchBegin = require('./handlers/step-search-begin');
+const stepSearch = require('./handlers/step-search');
+const stepMain = require('./handlers/step-main');
 
 
-module.exports = async function (data) {
+module.exports = async function steps(data) {
 	const { command, user } = data;
 	const { step } = user;
 
@@ -92,11 +97,11 @@ function preProcessData(data) {
 	} else {
 		const searchFlagIdx = command.indexOf('давай про');
 		if (searchFlagIdx !== -1) {
-			user.search = command
+			const term = command
 				.substring(searchFlagIdx + 9)
 				.trim()
 			;
-
+			user.search = { term };
 			nextStep(user, STEP_SEARCH_BEGIN);
 		}
 	}
@@ -163,152 +168,4 @@ function makeTTS(response) {
 	}
 
 	return response;
-}
-
-function stepNewUser({ user }) {
-	nextStep(user, STEP_NAME);
-
-	return {
-		text: 'Привет! Я читаю стишки пирожки, меня зовут Абырвалг, а тебя как?'
-	};
-}
-
-async function stepName(data) {
-	const { user, command } = data;
-	const buttons = [{
-		title: 'Еще еще!!!',
-		hide: true,
-		payload: {
-			value: PAYLOAD_MORE
-		}
-	}];
-
-	nextStep(user, STEP_MAIN);
-
-	// reject
-	if (checkCommand(command, ['не ', 'нет ']) || command === 'нет') {
-		const pies = await getPies(data);
-
-		return {
-			text: `Ладно, вот тебе первый пирожок!\n\n${pies}\n\nЕще?`,
-			buttons
-		};
-	}
-
-	// cleanup name
-	const name = command
-		.replace('а ', '')
-		.replace('меня ', '')
-		.replace('зовут ', '')
-		.replace('я ', '')
-		.trim()
-	;
-	user.name = name;
-
-	const search = await provider.search(name, 0);
-	if (search) {
-		return {
-			text: `${search.text}\n\nЕще?`,
-			buttons
-		};
-	}
-
-	const pies = await getPies(data);
-	return {
-		text: `${pies}\n\nЕще?`,
-		buttons
-	};
-}
-
-async function stepComeback(data) {
-	const pies = await getPies(data);
-	const { user } = data;
-
-	nextStep(user, STEP_MAIN);
-
-	return {
-		text: `С возвращением!\n\n${pies}`
-	};
-}
-
-async function stepMain(data) {
-	const pies = await getPies(data);
-	return {
-		text: pies
-	};
-}
-
-async function stepSearchBegin(data) {
-	const { user } = data;
-	const { search } = user;
-
-	const result = await provider.search(search, 0);
-	if (!result) {
-		nextStep(user, STEP_UNKNOWN);
-		user.search = null;
-
-		return {
-			text: `К сожалению ничего про «${search}» не нашлось. Попробуй выбрать что-то другое или просто скажи «Давай лучшее»`
-		}
-	}
-
-	nextStep(user, STEP_SEARCH);
-	user.searchIdx = 0;
-
-	return {
-		text: `Про «${search}» кое-что есть:\n${result.text}\n\nКогда надоест, попробуй выбрать что-то другое или просто скажи «Давай лучшее»`,
-		buttons: [{
-			title: 'Еще!',
-			hide: true,
-			payload: {
-				value: PAYLOAD_MORE
-			}
-		}]
-	};
-}
-
-async function stepSearch(data) {
-	const { user } = data;
-	const { search } = user;
-
-	const result = await provider.search(search, ++user.searchIdx);
-	if (!result) {
-		nextStep(user, STEP_UNKNOWN);
-		user.search = null;
-		user.searchIdx = null;
-
-		return {
-			text: `Про «${search}» это все. Можно поискать пирожки про что-то другое или просто скажи «Давай лучшее»`
-		};
-	}
-
-	return {
-		text: result.text,
-		buttons: [{
-			title: 'Еще!',
-			hide: true,
-			payload: {
-				value: PAYLOAD_MORE
-			}
-		}]
-	};
-}
-
-async function getPies({ user }) {
-	const { inRow } = user;
-
-	const pies = [];
-	for (let i = 0; i < inRow; ++i) {
-		const pieIdx = getRandomPieIdx(user);
-		let pie = await provider.best(pieIdx);
-		if (!pie) {
-			resetRandomPieIdx(user);
-			pies.push('Ого, у меня кончились лучшие пирожки, начну сначала пожалуй!');
-			break;
-		}
-
-		pies.push(pie.text);
-	}
-
-	return pies.join('\n\n');
 }

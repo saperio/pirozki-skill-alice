@@ -1,7 +1,7 @@
 const hash = require('crypto').createHash;
 const { STEP_NEW_USER } = require('./constants');
 
-module.exports = { createUser, nextStep, getRandomPieIdx, resetRandomPieIdx, setUserFlag, checkUserFlag, checkCommand, getHash };
+module.exports = { createUser, nextStep, setUserFlag, checkUserFlag, checkCommand, getHash };
 
 
 function createUser(id) {
@@ -16,32 +16,6 @@ function createUser(id) {
 
 function nextStep(user, step) {
 	user.step = step;
-}
-
-function getRandomPieIdx(user) {
-	let { bestContext } = user;
-	if (!bestContext) {
-		bestContext = {
-			page: -1,
-			idxList: []
-		};
-	}
-
-	const pageSize = 10;
-	let { page, idxList } = bestContext;
-	if (!idxList.length) {
-		++page;
-		idxList = Array.from({ length: pageSize }, (_, i) => i);
-	}
-
-	const pieIdx = page * pageSize + idxList.splice(Math.random() * idxList.length, 1)[0];
-	user.bestContext = { page, idxList };
-
-	return pieIdx;
-}
-
-function resetRandomPieIdx(user) {
-	user.bestContext = null;
 }
 
 function setUserFlag(user, flag) {
