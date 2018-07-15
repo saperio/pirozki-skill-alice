@@ -36,6 +36,12 @@ function ask(respText, handler, newSession = false) {
 			version: '1.0'
 		});
 
-		ask(resp.response.text)
+		let { text, buttons } = resp.response;
+		if (buttons && buttons.length) {
+			const buttonsText = buttons.map(button => `[${button.title}]`).join(' ');
+			text += `\n${buttonsText}`;
+		}
+
+		ask(`--------------${text}--------------`, handler);
 	});
 }

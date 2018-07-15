@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./src/index",
     "start-cli": "node ./src/index --pirocli",
-    "start-debug": "node --inspect-brk ./src/index",
+    "start-debug": "node --inspect-brk ./src/index --pirocli",
     "deploy": "now --public --no-clipboard && now alias && now rm pirozki-skill-alice --safe --yes"
   },
   "author": "SAPer",
