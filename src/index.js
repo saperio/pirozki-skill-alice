@@ -1,7 +1,7 @@
 const server = require('./server');
 const store = require('./store');
 const steps = require('./steps');
-const { DB_USERS, STEP_COMEBACK } = require('./constants');
+const { DB_USERS, STEP_COMEBACK, STEP_UNKNOWN } = require('./constants');
 const { createUser } = require('./utils');
 
 
@@ -31,7 +31,18 @@ async function handler(req) {
 	}
 	user.requestIdx++;
 
-	const response = await steps({ command, user, payload });
+	let response;
+	try {
+		response = await steps({ command, user, payload });
+	} catch(e) {
+		console.log(`Something goes wrong with user ${user_id}:\n${e}`);
+
+		user.step = STEP_UNKNOWN;
+		response = {
+			text: 'Ой, что-то пошло не так! Я попробую сначала?'
+		}
+	}
+
 	store.set(DB_USERS, user_id, user);
 
 	return {
