@@ -6,7 +6,7 @@ let memory = {};
 
 async function init() {
 }
-
+// do not save DB_PIES_SEARCH and DB_PIES_BEST databases to persistant db
 function set(db, id, val) {
 	if (!memory[db]) {
 		memory[db] = {};

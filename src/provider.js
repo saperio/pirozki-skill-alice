@@ -51,33 +51,55 @@ async function best(pieIdx) {
 }
 
 async function search(term, searchIdx) {
-	if ((/[<>;:(){}@$%&?*/\\]/g).test(term)) {
-		return null;
-	}
-
 	const pageSize = 30;
-	const pageIdx = 1 + (searchIdx / pageSize) | 0;
-	const pageId = `page${pageIdx}`;
 	const searchId = getHash(term);
+	const checkRegex = new RegExp(`[^\\S]${term}[^\\S]`, 'gi');
 
 	let cache = store.get(DB_PIES_SEARCH, searchId);
 	if (!cache) {
 		cache = { pages: {} };
 	}
 
-	let page = cache.pages[pageId];
-	if (!page) {
-		const url = `http://poetory.ru/content/list?sort=likes&query=${encodeURIComponent(term)}&page=${pageIdx}&per-page=30`;
-		page = await fetchPage(url);
+	// iterate pages
+	while (true) {
+		const pageIdx = 1 + (searchIdx / pageSize) | 0;
+		const pageId = `page${pageIdx}`;
 
-		cache.pages[pageId] = page;
-		store.set(DB_PIES_SEARCH, searchId, cache);
+		let page = cache.pages[pageId];
+		if (!page) {
+			const url = `http://poetory.ru/content/list?sort=likes&query=${encodeURIComponent(term)}&page=${pageIdx}&per-page=30`;
+			page = await fetchPage(url);
+
+			// flag invalid (non-full word term) pies
+			for (let pie of page) {
+				if (!checkRegex.test(pie.text)) {
+					pie.invalid = true;
+				}
+			}
+
+			cache.pages[pageId] = page;
+			store.set(DB_PIES_SEARCH, searchId, cache);
+		}
+
+		// iterate pies on page
+		while (true) {
+			const idx = searchIdx % pageSize;
+
+			// go to next page
+			if (idx === pageSize) {
+				break;
+			}
+
+			if (idx >= page.length) {
+				return null;
+			}
+
+			const { invalid, text } = page[idx];
+			if (!invalid) {
+				return { text, searchIdx };
+			}
+
+			searchIdx++;
+		}
 	}
-
-	const idx = searchIdx % pageSize;
-	if (idx >= page.length) {
-		return null;
-	}
-
-	return page[idx];
 }

@@ -29,19 +29,23 @@ async function search(user) {
 		return null;
 	}
 
+	term = term.trim().toLowerCase();
+
 	if (searchIdx === undefined) {
 		searchIdx = 0;
 	} else {
 		++searchIdx;
 	}
 
-	user.search.searchIdx = searchIdx;
-
 	const result = await provider.search(term, searchIdx);
 	if (!result) {
 		user.search = {};
 		return null;
 	}
+
+	// update searchIdx
+	searchIdx = result.searchIdx;
+	user.search = { term, searchIdx };
 
 	return result.text;
 }

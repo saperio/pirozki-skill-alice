@@ -14,7 +14,7 @@ module.exports = async function stepName({ user, command }) {
 	nextStep(user, STEP_MAIN);
 
 	// reject
-	if (checkCommand(command, ['не ', 'нет ']) || command === 'нет') {
+	if (checkCommand(command, ['не ', 'нет ', 'неважно']) || command === 'нет') {
 		const pies = await best(user);
 
 		return {
@@ -29,7 +29,6 @@ module.exports = async function stepName({ user, command }) {
 		.replace('меня ', '')
 		.replace('зовут ', '')
 		.replace('я ', '')
-		.trim()
 	;
 	user.name = name;
 	user.search = { term: name };
@@ -37,7 +36,7 @@ module.exports = async function stepName({ user, command }) {
 	const result = await search(user);
 	if (result) {
 		return {
-			text: `${result}\n\nЕще?`,
+			text: `Про тебя кое-что есть:\n\n${result}\n\nА дальше я буду читать из списка лучших.`,
 			buttons
 		};
 	}
