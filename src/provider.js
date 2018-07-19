@@ -53,7 +53,6 @@ async function best(pieIdx) {
 async function search(term, searchIdx) {
 	const pageSize = 30;
 	const searchId = getHash(term);
-	const checkRegex = new RegExp(`[^\\S]${term}[^\\S]`, 'gi');
 
 	let cache = store.get(DB_PIES_SEARCH, searchId);
 	if (!cache) {
@@ -72,6 +71,7 @@ async function search(term, searchIdx) {
 
 			// flag invalid (non-full word term) pies
 			for (let pie of page) {
+				const checkRegex = new RegExp(`\\s+${term}\\s+`, 'gi');
 				if (!checkRegex.test(pie.text)) {
 					pie.invalid = true;
 				}
@@ -84,12 +84,6 @@ async function search(term, searchIdx) {
 		// iterate pies on page
 		while (true) {
 			const idx = searchIdx % pageSize;
-
-			// go to next page
-			if (idx === pageSize) {
-				break;
-			}
-
 			if (idx >= page.length) {
 				return null;
 			}
@@ -100,6 +94,11 @@ async function search(term, searchIdx) {
 			}
 
 			searchIdx++;
+
+			// go to next page
+			if (searchIdx % pageSize === 0) {
+				break;
+			}
 		}
 	}
 }
