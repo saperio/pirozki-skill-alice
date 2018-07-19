@@ -23,7 +23,7 @@ async function handler(req) {
 	const { payload } = request;
 	const command = request.command.toLowerCase();
 
-	let user = store.get(DB_USERS, user_id);
+	let user = await store.get(DB_USERS, user_id);
 	if (!user) {
 		user = createUser(user_id);
 	} else if (session.new) {

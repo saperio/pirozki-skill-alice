@@ -34,7 +34,7 @@ async function best(pieIdx) {
 	const pageIdx = 1 + (pieIdx / pageSize) | 0;
 	const pageId = `page${pageIdx}`;
 
-	let page = store.get(DB_PIES_BEST, pageId);
+	let page = await store.get(DB_PIES_BEST, pageId);
 	if (!page) {
 		const url = `http://poetory.ru/content/list?sort=rate&page=${pageIdx}&per-page=30`;
 		page = await fetchPage(url);
@@ -54,7 +54,7 @@ async function search(term, searchIdx) {
 	const pageSize = 30;
 	const searchId = getHash(term);
 
-	let cache = store.get(DB_PIES_SEARCH, searchId);
+	let cache = await store.get(DB_PIES_SEARCH, searchId);
 	if (!cache) {
 		cache = { pages: {} };
 	}
