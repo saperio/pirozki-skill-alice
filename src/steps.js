@@ -119,7 +119,7 @@ function postProcessData(data, response) {
 	if (user.requestIdx >= 3 && !checkUserFlag(user, USER_FLAG_PROPOSE_ROW)) {
 		setUserFlag(user, USER_FLAG_PROPOSE_ROW);
 
-		response.text += '\n\nА еще я могу читать по два или по три пирожка за раз, просто скажи «Давай по два»';
+		response.text += '\n\nА еще я могу читать по два или по три пирожка за раз, просто скажи «Давай по два» или «еще», чтобы ничего не менять';
 		response.buttons = [
 			{
 				title: 'Давай по два',

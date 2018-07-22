@@ -36,7 +36,7 @@ module.exports = async function stepName({ user, command }) {
 	const result = await search(user);
 	if (result) {
 		return {
-			text: `Про тебя кое-что есть:\n\n${result}\n\nА дальше я буду читать из списка лучших.`,
+			text: `Про тебя кое-что есть:\n\n${result}\n\nА дальше я буду читать из списка лучших. Поехали?`,
 			buttons
 		};
 	}
