@@ -38,6 +38,11 @@ async function init() {
 }
 
 async function loadDbInfo() {
+	const url = process.env.PIR_MONGO_URL;
+	if (url) {
+		return { url };
+	}
+
 	return new Promise((resolve, reject) => {
 		fs.readFile('./db.json', (err, raw) => {
 			if (err) {

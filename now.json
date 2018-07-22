@@ -1,4 +1,7 @@
 {
 	"name": "pirozki-skill-alice",
-	"alias": "pirozki-skill-alice"
+	"alias": "pirozki-skill-alice",
+	"env": {
+		"PIR_MONGO_URL": "@pir-mongo-url"
+	}
 }
