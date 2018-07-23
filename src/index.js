@@ -3,10 +3,12 @@ const store = require('./store');
 const steps = require('./steps');
 const { DB_USERS, STEP_COMEBACK, STEP_UNKNOWN } = require('./constants');
 const { createUser } = require('./utils');
+const metrics = require('./metrics');
 
 
 (async () => {
 	await store.init();
+	metrics.init();
 
 	if (process.argv[2] === '--pirocli') {
 		const cli = require('./cli');
@@ -22,6 +24,8 @@ async function handler(req) {
 	const { user_id } = session;
 	const { payload } = request;
 	const command = request.command.toLowerCase();
+
+	metrics.incoming(req);
 
 	let user = await store.get(DB_USERS, user_id);
 	if (!user) {
@@ -45,7 +49,7 @@ async function handler(req) {
 
 	store.set(DB_USERS, user_id, user);
 
-	return {
+	const result = {
 		response: {
 			end_session: false,
 			...response
@@ -53,4 +57,8 @@ async function handler(req) {
 		session,
 		version
 	};
+
+	metrics.outgoing(result);
+
+	return result;
 }

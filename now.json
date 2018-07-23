@@ -2,6 +2,7 @@
 	"name": "pirozki-skill-alice",
 	"alias": "pirozki-skill-alice",
 	"env": {
-		"PIR_MONGO_URL": "@pir-mongo-url"
+		"PIR_MONGO_URL": "@pir-mongo-url",
+		"DASHBOT_API_KEY": "@dashbot-api-key"
 	}
 }
