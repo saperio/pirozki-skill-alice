@@ -32,7 +32,7 @@ function incoming(data) {
 	const { payload, command } = request;
 
 	let msg = {
-		text: command,
+		text: command || '',
 		userId: user_id
 	};
 

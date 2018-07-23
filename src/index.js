@@ -23,7 +23,7 @@ async function handler(req) {
 	const { request, session, version } = req;
 	const { user_id } = session;
 	const { payload } = request;
-	const command = request.command.toLowerCase();
+	const command = request.command ? request.command.toLowerCase() : '';
 
 	metrics.incoming(req);
 
