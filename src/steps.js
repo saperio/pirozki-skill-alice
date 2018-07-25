@@ -96,7 +96,7 @@ function preProcessData(data) {
 	} else {
 		const searchFlagIdx = command.indexOf('давай про');
 		if (searchFlagIdx !== -1) {
-			const term = command.substring(searchFlagIdx + 9);
+			const term = command.substring(searchFlagIdx + 10);
 			user.search = { term };
 			nextStep(user, STEP_SEARCH_BEGIN);
 		}
