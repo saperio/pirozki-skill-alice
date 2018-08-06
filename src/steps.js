@@ -1,4 +1,4 @@
-const { nextStep, setUserFlag, checkUserFlag, checkCommand } = require('./utils');
+const { nextStep, setUserFlag, checkUserFlag, checkCommand, initSearch } = require('./utils');
 const {
 	STEP_NEW_USER,
 	STEP_NAME,
@@ -97,7 +97,7 @@ function preProcessData(data) {
 		const searchFlagIdx = command.indexOf('давай про');
 		if (searchFlagIdx !== -1) {
 			const term = command.substring(searchFlagIdx + 10);
-			user.search = { term };
+			initSearch(user, term);
 			nextStep(user, STEP_SEARCH_BEGIN);
 		}
 	}
@@ -148,19 +148,21 @@ function postProcessData(data, response) {
 }
 
 function makeTTS(response) {
-	const { text } = response;
+	const { text, tts } = response;
 	const list = [
 		['съебя', 'съеб+я'],
-		['нахуй', 'н+ахуй']
+		['нахуй', 'н+ахуй'],
+		['\n\n', '------']
 	];
 
-	let tts = text;
+	const original = tts || text;
+	let ttsConverted = original;
 	for (let [search, replace] of list) {
-		tts = tts.replace(new RegExp(search, 'g'), replace);
+		ttsConverted = tts.replace(new RegExp(search, 'g'), replace);
 	}
 
-	if (text !== tts) {
-		response.tts = tts;
+	if (original !== ttsConverted) {
+		response.tts = ttsConverted;
 	}
 
 	return response;

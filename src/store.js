@@ -3,7 +3,7 @@ const mongo = require('mongodb').MongoClient;
 const { DB_USERS, DB_PIES_BEST, DB_PIES_SEARCH } = require('./constants');
 
 
-module.exports = { init, set, get };
+module.exports = { init, set, get, getInstant };
 
 
 let memory = {};
@@ -122,4 +122,12 @@ async function get(collection, id) {
 	delete converted._id;
 
 	return converted;
+}
+
+function getInstant(collection, id) {
+	if (memory[collection][id]) {
+		return memory[collection][id];
+	}
+
+	return null;
 }

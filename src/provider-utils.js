@@ -1,53 +1,49 @@
 const provider = require('./provider');
+const { PROVIDER_STATUS } = provider;
 
 
 module.exports = { best, search };
 
-async function best(user) {
+function best(user) {
 	const { inRow } = user;
 
 	const pies = [];
 	for (let i = 0; i < inRow; ++i) {
 		const pieIdx = getRandomPieIdx(user);
-		let pie = await provider.best(pieIdx);
-		if (!pie) {
+		const { text, status } = provider.best(pieIdx);
+		if (status === PROVIDER_STATUS.STATUS_END) {
 			resetRandomPieIdx(user);
 			pies.push('Ого, у меня кончились лучшие пирожки, начну сначала пожалуй!');
 			break;
+		} else if (status === PROVIDER_STATUS.STATUS_NOT_READY) {
+			pies.push('Что-то пошло не так, повторите «Все будет хорошо» два раза и все исправится!');
+			break;
 		}
 
-		pies.push(pie.text);
+		pies.push(text);
 	}
 
 	return pies.join('\n\n');
 }
 
-async function search(user) {
+function search(user) {
 	let { term, searchIdx } = user.search;
-	if ((/[<>;:(){}@$%&?*/\\]/g).test(term)) {
+	if (!term) {
 		user.search = {};
 		return null;
 	}
 
-	term = term.trim().toLowerCase();
-
-	if (searchIdx === undefined) {
-		searchIdx = 0;
-	} else {
-		++searchIdx;
-	}
-
-	const result = await provider.search(term, searchIdx);
-	if (!result) {
+	const result = provider.search(term, ++searchIdx);
+	const { status, text } = result;
+	if (status === PROVIDER_STATUS.STATUS_END) {
 		user.search = {};
+		return null;
+	} else if (status === PROVIDER_STATUS.STATUS_NOT_READY) {
 		return null;
 	}
 
-	// update searchIdx
-	searchIdx = result.searchIdx;
-	user.search = { term, searchIdx };
-
-	return result.text;
+	user.search.searchIdx = result.searchIdx;
+	return text;
 }
 
 function getRandomPieIdx(user) {

@@ -1,12 +1,13 @@
 const hash = require('crypto').createHash;
-const { STEP_NEW_USER } = require('./constants');
+const { STEP_UNKNOWN, STEP_NEW_USER } = require('./constants');
 
-module.exports = { createUser, nextStep, setUserFlag, checkUserFlag, checkCommand, getHash };
+module.exports = { createUser, nextStep, setUserFlag, checkUserFlag, checkCommand, getHash, initSearch, getHowto };
 
 
 function createUser(id) {
 	return {
 		step: STEP_NEW_USER,
+		stepPrev: STEP_UNKNOWN,
 		requestIdx: 0,
 		inRow: 1,
 		flag: 0,
@@ -15,6 +16,7 @@ function createUser(id) {
 }
 
 function nextStep(user, step) {
+	user.stepPrev = user.step;
 	user.step = step;
 }
 
@@ -32,4 +34,33 @@ function checkCommand(command, terms) {
 
 function getHash(str) {
 	return hash('sha1').update(str).digest('hex');
+}
+
+function initSearch(user, term) {
+	if ((/[<>;:(){}@$%&?*/\\]/g).test(term)) {
+		user.search = {};
+		return;
+	}
+
+	user.search = {
+		term: term.trim().toLowerCase(),
+		searchIdx: -1
+	};
+}
+
+function getHowto() {
+	const text =
+		'Вот, что я умею:\n\n' +
+		'В основном режиме я просто читаю лучшие пирожки. Ты всегда можешь выбрать сколько ' +
+		'за раз - по одному, два или три, сказав, например, «Давай по два»!\n\n' +
+		'Еще я могу поискать пирожки на какую-нибудь тему, просто скажи «Давай про...». Чтобы вернуться к лучшему, скажи «Давай лучшее».'
+	;
+	const tts =
+		'Вот, что я умею\n\n' +
+		'В основном режиме я просто читаю лучшие пирожки. Ты всегда можешь выбрать сколько ' +
+		'за раз - по одному, два или три, сказав, например, Давай по два!\n\n' +
+		'Еще я могу поискать пирожки на какую-нибудь тему, просто скажи Давай пр+о. Чтобы вернуться к лучшему, скажи Давай лучшее.'
+	;
+
+	return { text, tts };
 }
