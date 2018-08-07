@@ -3,8 +3,8 @@ const { STEP_MAIN, PAYLOAD_MORE } = require('../constants');
 const { best } = require('../provider-utils');
 
 
-module.exports = async function stepComeback({ user }) {
-	const pies = await best(user);
+module.exports = function stepComeback({ user }) {
+	const pies = best(user);
 
 	nextStep(user, STEP_MAIN);
 	return {

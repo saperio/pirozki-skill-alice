@@ -37,7 +37,7 @@ async function handler(req) {
 
 	let response;
 	try {
-		response = await steps({ command, user, payload });
+		response = steps({ command, user, payload });
 	} catch(e) {
 		console.log(`Something goes wrong with user ${user_id}:\n${e}`);
 

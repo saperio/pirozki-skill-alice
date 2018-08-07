@@ -2,6 +2,7 @@ const { nextStep, setUserFlag, checkUserFlag, checkCommand, initSearch } = requi
 const {
 	STEP_NEW_USER,
 	STEP_NAME,
+	STEP_NAME_RESULT,
 	STEP_MAIN,
 	STEP_COMEBACK,
 	STEP_SEARCH,
@@ -15,13 +16,24 @@ const {
 } = require('./constants');
 const stepNewUser = require('./handlers/step-new-user');
 const stepName = require('./handlers/step-name');
+const stepNameResult = require('./handlers/step-name-result');
 const stepComeback = require('./handlers/step-comeback');
 const stepSearchBegin = require('./handlers/step-search-begin');
 const stepSearch = require('./handlers/step-search');
 const stepMain = require('./handlers/step-main');
 
+const stepHandlers = {
+	[STEP_NEW_USER]: stepNewUser,
+	[STEP_NAME]: stepName,
+	[STEP_NAME_RESULT]: stepNameResult,
+	[STEP_COMEBACK]: stepComeback,
+	[STEP_SEARCH_BEGIN]: stepSearchBegin,
+	[STEP_SEARCH]: stepSearch,
+	[STEP_MAIN]: stepMain
+};
 
-module.exports = async function steps(data) {
+
+module.exports = function steps(data) {
 	const { command, user } = data;
 
 	// check reject
@@ -34,33 +46,12 @@ module.exports = async function steps(data) {
 
 	preProcessData(data);
 
-	let response = {};
-	switch(user.step) {
-		case STEP_NEW_USER:
-			response = stepNewUser(data);
-			break;
-
-		case STEP_NAME:
-			response = await stepName(data);
-			break;
-
-		case STEP_COMEBACK:
-			response = await stepComeback(data);
-			break;
-
-		case STEP_SEARCH_BEGIN:
-			response = await stepSearchBegin(data);
-			break;
-
-		case STEP_SEARCH:
-			response = await stepSearch(data);
-			break;
-
-		case STEP_MAIN:
-			response = await stepMain(data);
-			break;
+	const stepHandler = stepHandlers[user.step];
+	if (!stepHandler) {
+		throw `No step handler for ${user.step} step`;
 	}
 
+	let response = stepHandler(data);
 	response = postProcessData(data, response);
 	response = makeTTS(response);
 
@@ -163,6 +154,10 @@ function makeTTS(response) {
 
 	if (original !== ttsConverted) {
 		response.tts = ttsConverted;
+	}
+
+	if (text === response.tts) {
+		delete response.tts;
 	}
 
 	return response;

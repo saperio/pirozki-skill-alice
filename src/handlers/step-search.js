@@ -2,10 +2,11 @@ const { nextStep } = require('../utils');
 const { STEP_UNKNOWN, PAYLOAD_MORE } = require('../constants');
 const { search } = require('../provider-utils');
 
-module.exports = async function stepSearch({ user }) {
+
+module.exports = function stepSearch({ user }) {
 	const { term } = user.search;
 
-	const result = await search(user);
+	const result = search(user);
 	if (!result) {
 		nextStep(user, STEP_UNKNOWN);
 		return {
