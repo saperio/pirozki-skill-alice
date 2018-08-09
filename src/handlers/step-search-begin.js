@@ -35,12 +35,17 @@ module.exports = function stepSearchBegin({ user }) {
 }
 
 const waitTetxtList = [
-	'Извините, наш сисадмин отошел за кофе, скоро он вернется и все для вас найдет! Лад+ы?'
+	'Извините, наш сисадмин отошел за кофе, скоро он вернется и все для вас найдет! Лад+ы?',
+	'Наш искусственный интеллект старается изо всех сил, немножко искр+ит - - даже, но скоро все найдет! Ок?',
+	'Так, так, так..., где же это было... сейчас поищу... Ага, вот оно, закатилось под шкаф! Показать?'
 ];
 
 function waitText() {
 	const text = waitTetxtList[Math.floor(Math.random() * waitTetxtList.length)];
-	const tts = text.replace('+', '');
+	const tts = text
+		.replace(/\+/g, '')
+		.replace(/ -/g, '')
+	;
 
 	return { text, tts };
 }

@@ -8,7 +8,7 @@ module.exports = function stepNameResult({ user }) {
 
 	// try again - serch made on prev step and must be complete at this point
 	// otherwise skip it
-	// Reinit to reset sercchIdx
+	// re-init to reset searchIdx
 	initSearch(user, user.name);
 
 	const result = search(user);

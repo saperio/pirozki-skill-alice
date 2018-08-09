@@ -80,18 +80,28 @@ function preProcessData(data) {
 	}
 
 	// then check for predefined commands
-	if (checkCommand(command, ['по два', 'по две'])) {
+	if (checkCommand(command, ['по два', 'по две', 'по 2'])) {
 		user.inRow = 2;
-	} else if (checkCommand(command, ['по три'])) {
+	} else if (checkCommand(command, ['по три', 'по 3'])) {
 		user.inRow = 3;
 	} else if (checkCommand(command, ['давай лучшее', 'давай лучшие'])) {
 		nextStep(user, STEP_MAIN);
 	} else if (checkCommand(command, ['что ты умеешь', 'что ты можешь'])) {
 		nextStep(user, STEP_HOWTO);
 	} else {
-		const searchFlagIdx = command.indexOf('давай про');
-		if (searchFlagIdx !== -1) {
-			const term = command.substring(searchFlagIdx + 10);
+		let term;
+		const triggers = [
+			'давай про'
+		];
+		for (let trigger of triggers) {
+			const idx = command.indexOf(trigger);
+			if (idx !== -1) {
+				term = command.substring(idx + trigger.length + 1);
+				break;
+			}
+		}
+
+		if (term) {
 			initSearch(user, term);
 			nextStep(user, STEP_SEARCH_BEGIN);
 		}
@@ -107,7 +117,7 @@ function makeTTS(response) {
 	const list = [
 		['съебя', 'съеб+я'],
 		['нахуй', 'н+ахуй'],
-		['\n\n', '------']
+		['\n\n', '- - - - - -']
 	];
 
 	const original = tts || text;
