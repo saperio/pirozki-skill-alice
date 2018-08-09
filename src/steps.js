@@ -7,6 +7,7 @@ const {
 	STEP_COMEBACK,
 	STEP_SEARCH,
 	STEP_SEARCH_BEGIN,
+	STEP_HOWTO,
 	STEP_UNKNOWN,
 	PAYLOAD_MORE,
 	PAYLOAD_TWO_IN_ROW,
@@ -20,6 +21,7 @@ const stepNameResult = require('./handlers/step-name-result');
 const stepComeback = require('./handlers/step-comeback');
 const stepSearchBegin = require('./handlers/step-search-begin');
 const stepSearch = require('./handlers/step-search');
+const stepHowto = require('./handlers/step-howto');
 const stepMain = require('./handlers/step-main');
 
 const stepHandlers = {
@@ -29,6 +31,7 @@ const stepHandlers = {
 	[STEP_COMEBACK]: stepComeback,
 	[STEP_SEARCH_BEGIN]: stepSearchBegin,
 	[STEP_SEARCH]: stepSearch,
+	[STEP_HOWTO]: stepHowto,
 	[STEP_MAIN]: stepMain
 };
 
@@ -84,6 +87,8 @@ function preProcessData(data) {
 		user.inRow = 3;
 	} else if (checkCommand(command, ['давай лучшее', 'давай лучшие'])) {
 		nextStep(user, STEP_MAIN);
+	} else if (checkCommand(command, ['что ты умеешь', 'что ты можешь'])) {
+		nextStep(user, STEP_HOWTO);
 	} else {
 		const searchFlagIdx = command.indexOf('давай про');
 		if (searchFlagIdx !== -1) {
