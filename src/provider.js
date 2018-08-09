@@ -4,17 +4,16 @@ const store = require('./store');
 const { getHash } = require('./utils');
 const { DB_PIES_BEST, DB_PIES_SEARCH } = require('./constants');
 
-
-module.exports = { init, best, search, PROVIDER_STATUS };
-
-const pageSize = 30;
 const PROVIDER_STATUS = {
 	STATUS_OK: 1,
 	STATUS_NOT_READY: 2,
 	STATUS_END: 3
 }
-
+const pageSize = 30;
 let fetchQueue = [];
+
+module.exports = { init, best, search, PROVIDER_STATUS };
+
 
 function init() {
 	const prefetchPages = 2;

@@ -55,7 +55,6 @@ module.exports = function steps(data) {
 	}
 
 	let response = stepHandler(data);
-	response = postProcessData(data, response);
 	response = makeTTS(response);
 
 	return response;
@@ -103,46 +102,6 @@ function preProcessData(data) {
 	}
 }
 
-function postProcessData(data, response) {
-	const { user } = data;
-
-	if (user.step !== STEP_MAIN) {
-		return response;
-	}
-
-	// and then make some purposes:
-	// on 3 or more step propose to change rows
-	if (user.requestIdx >= 3 && !checkUserFlag(user, USER_FLAG_PROPOSE_ROW)) {
-		setUserFlag(user, USER_FLAG_PROPOSE_ROW);
-
-		response.text += '\n\nА еще я могу читать по два или по три пирожка за раз, просто скажи «Давай по два» или «еще», чтобы ничего не менять';
-		response.buttons = [
-			{
-				title: 'Давай по два',
-				hide: true,
-				payload: {
-					value: PAYLOAD_TWO_IN_ROW
-				}
-			},
-			{
-				title: 'Давай по три',
-				hide: true,
-				payload: {
-					value: PAYLOAD_THREE_IN_ROW
-				}
-			}
-		];
-	}
-
-	// on 4 or more step propose search
-	else if (user.requestIdx >= 4 && !checkUserFlag(user, USER_FLAG_PROPOSE_SEARCH)) {
-		setUserFlag(user, USER_FLAG_PROPOSE_SEARCH);
-		response.text += '\n\nЯ могу поискать пирожки на какую-нибудь тему, просто скажи «Давай про...»';
-	}
-
-	return response;
-}
-
 function makeTTS(response) {
 	const { text, tts } = response;
 	const list = [
@@ -154,7 +113,7 @@ function makeTTS(response) {
 	const original = tts || text;
 	let ttsConverted = original;
 	for (let [search, replace] of list) {
-		ttsConverted = tts.replace(new RegExp(search, 'g'), replace);
+		ttsConverted = ttsConverted.replace(new RegExp(search, 'g'), replace);
 	}
 
 	if (original !== ttsConverted) {
