@@ -4,11 +4,13 @@ const steps = require('./steps');
 const { DB_USERS, STEP_COMEBACK, STEP_UNKNOWN } = require('./constants');
 const { createUser } = require('./utils');
 const metrics = require('./metrics');
+const provider = require('./provider');
 
 
 (async () => {
 	await store.init();
 	metrics.init();
+	provider.init();
 
 	if (process.argv[2] === '--pirocli') {
 		const cli = require('./cli');

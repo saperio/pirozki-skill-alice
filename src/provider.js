@@ -5,8 +5,9 @@ const { getHash } = require('./utils');
 const { DB_PIES_BEST, DB_PIES_SEARCH } = require('./constants');
 
 
-module.exports = { best, search, PROVIDER_STATUS };
+module.exports = { init, best, search, PROVIDER_STATUS };
 
+const pageSize = 30;
 const PROVIDER_STATUS = {
 	STATUS_OK: 1,
 	STATUS_NOT_READY: 2,
@@ -15,14 +16,19 @@ const PROVIDER_STATUS = {
 
 let fetchQueue = [];
 
+function init() {
+	const prefetchPages = 2;
+	for (let i = 0; i < prefetchPages; ++i) {
+		fetchBest(i * pageSize);
+	}
+}
+
 function best(pieIdx) {
-	const pageSize = 30;
-	const pageIdx = 1 + (pieIdx / pageSize) | 0;
-	const pageId = `page${pageIdx}`;
+	const { pageId } = getPageData(pieIdx);
 
 	let page = store.getInstant(DB_PIES_BEST, pageId);
 	if (!page) {
-		fetchBest(pageId, pageIdx);
+		fetchBest(pieIdx);
 		return { status: PROVIDER_STATUS.STATUS_NOT_READY };
 	}
 
@@ -31,12 +37,18 @@ function best(pieIdx) {
 		return { status: PROVIDER_STATUS.STATUS_END };
 	}
 
+	// prefetch next page, if needed
+	const pieIdxNext = pieIdx + pageSize;
+	const pageNext = getPageData(pieIdxNext);
+	if (!store.getInstant(DB_PIES_BEST, pageNext.pageId)) {
+		fetchBest(pieIdxNext);
+	}
+
 	const { text } = page[idx];
 	return { text, status: PROVIDER_STATUS.STATUS_OK };
 }
 
 function search(term, searchIdx) {
-	const pageSize = 30;
 	const searchId = getHash(term);
 
 	let cache = store.getInstant(DB_PIES_SEARCH, searchId);
@@ -46,12 +58,11 @@ function search(term, searchIdx) {
 
 	// iterate pages
 	while (true) {
-		const pageIdx = 1 + (searchIdx / pageSize) | 0;
-		const pageId = `page${pageIdx}`;
+		const { pageId } = getPageData(searchIdx);
 
 		let page = cache.pages[pageId];
 		if (!page) {
-			fetchSearch(pageId, pageIdx, term, searchId);
+			fetchSearch(searchIdx, term);
 			return { status: PROVIDER_STATUS.STATUS_NOT_READY };
 		}
 
@@ -64,6 +75,13 @@ function search(term, searchIdx) {
 
 			const { invalid, text } = page[idx];
 			if (!invalid) {
+				// prefetch next page, if needed
+				const searchIdxNext = searchIdx + pageSize;
+				const pageNext = getPageData(searchIdxNext);
+				if (!cache.pages[pageNext.pageId]) {
+					fetchSearch(searchIdxNext, term);
+				}
+
 				return { text, searchIdx, status: PROVIDER_STATUS.STATUS_OK };
 			}
 
@@ -77,8 +95,16 @@ function search(term, searchIdx) {
 	}
 }
 
-function fetchBest(pageId, pageIdx) {
-	const url = `http://poetory.ru/content/list?sort=rate&page=${pageIdx}&per-page=30`;
+function getPageData(idx) {
+	const pageIdx = 1 + (idx / pageSize) | 0;
+	const pageId = `page${pageIdx}`;
+
+	return { pageIdx, pageId };
+}
+
+function fetchBest(pieIdx) {
+	const { pageIdx, pageId } = getPageData(pieIdx);
+	const url = `http://poetory.ru/content/list?sort=rate&page=${pageIdx}&per-page=${pageSize}`;
 	const cb = page => {
 		store.set(DB_PIES_BEST, pageId, page);
 	}
@@ -86,8 +112,10 @@ function fetchBest(pageId, pageIdx) {
 	pushQueue({ url, cb });
 }
 
-function fetchSearch(pageId, pageIdx, term, searchId) {
-	const url = `http://poetory.ru/content/list?sort=likes&query=${encodeURIComponent(term)}&page=${pageIdx}&per-page=30`;
+function fetchSearch(searchIdx, term) {
+	const searchId = getHash(term);
+	const { pageIdx, pageId } = getPageData(searchIdx);
+	const url = `http://poetory.ru/content/list?sort=likes&query=${encodeURIComponent(term)}&page=${pageIdx}&per-page=${pageSize}`;
 	const cb = page => {
 		// flag invalid (non-full word term) pies
 		for (let pie of page) {
@@ -121,19 +149,23 @@ function pushQueue(item) {
 }
 
 function updateQueue() {
-	const item = fetchQueue.shift();
-	if (!item) {
+	const item = fetchQueue[0];
+	if (!item || item.progress) {
 		return;
 	}
 
 	const { url, cb } = item;
+
+	item.progress = true;
 	fetchPage(url)
 		.then(page => {
 			cb(page);
+			fetchQueue.shift();
 			updateQueue();
 		})
 		.catch(reason => {
 			console.error(`Failed fetch '${url}' with reason: ${reason}`);
+			fetchQueue.shift();
 			updateQueue();
 		})
 	;
