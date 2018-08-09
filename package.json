@@ -12,7 +12,6 @@
   "author": "SAPer",
   "license": "MIT",
   "dependencies": {
-    "dashbot": "^9.9.2",
     "fast-html-parser": "^1.0.1",
     "mongodb": "^3.1.1",
     "node-fetch": "^2.1.2"

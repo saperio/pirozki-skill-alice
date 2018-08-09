@@ -1,7 +1,7 @@
 const hash = require('crypto').createHash;
 const { STEP_UNKNOWN, STEP_NEW_USER } = require('./constants');
 
-module.exports = { createUser, nextStep, setUserFlag, checkUserFlag, checkCommand, getHash, initSearch, getHowto };
+module.exports = { createUser, nextStep, checkCommand, getHash, initSearch, getHowto };
 
 
 function createUser(id) {
@@ -10,7 +10,6 @@ function createUser(id) {
 		stepPrev: STEP_UNKNOWN,
 		requestIdx: 0,
 		inRow: 1,
-		flag: 0,
 		id
 	};
 }
@@ -18,14 +17,6 @@ function createUser(id) {
 function nextStep(user, step) {
 	user.stepPrev = user.step;
 	user.step = step;
-}
-
-function setUserFlag(user, flag) {
-	user.flag |= flag;
-}
-
-function checkUserFlag(user, flag) {
-	return !!(user.flag & flag);
 }
 
 function checkCommand(command, terms) {

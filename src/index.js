@@ -27,8 +27,6 @@ async function handler(req) {
 	const { payload } = request;
 	const command = request.command ? request.command.toLowerCase() : '';
 
-	metrics.incoming(req);
-
 	let user = await store.get(DB_USERS, user_id);
 	if (!user) {
 		user = createUser(user_id);
@@ -37,11 +35,13 @@ async function handler(req) {
 	}
 	user.requestIdx++;
 
+	metrics.incoming(user, req);
+
 	let response;
 	try {
 		response = steps({ command, user, payload });
 	} catch(e) {
-		console.log(`Something goes wrong with user ${user_id}:\n${e}`);
+		console.error(`Something goes wrong with user ${user_id}:\n${e}`);
 
 		user.step = STEP_UNKNOWN;
 		response = {
@@ -60,7 +60,7 @@ async function handler(req) {
 		version
 	};
 
-	metrics.outgoing(result);
+	metrics.outgoing(user, result);
 
 	return result;
 }

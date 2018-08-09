@@ -1,73 +1,93 @@
-const dashbot = require('dashbot');
+const fetch = require('node-fetch');
+const { PAYLOAD_MORE, PAYLOAD_TWO_IN_ROW, PAYLOAD_THREE_IN_ROW } = require('./constants');
+
 
 module.exports = { init, incoming, outgoing };
 
-
-let service;
+let apiKey;
 
 function init() {
-	const apiKey = process.env.DASHBOT_API_KEY;
+	apiKey = process.env.BOTANALYTICS_API_KEY;
 	if (!apiKey) {
-		console.log('no api-key for dashbot, continue without metrics');
+		console.log('no api-key for botanalytics, continue without metrics');
 		return;
 	}
 
-	const api = dashbot(apiKey);
-	if (!api || !api.generic) {
-		console.log('can\'t init dashbot api, continue without metrics');
-		return;
-	}
-
-	service = api.generic;
-	console.log('successfully init dashbot api, metrics on');
+	console.log('successfully init botanalytics api, metrics on');
 }
 
-function incoming(data) {
-	if (!service) {
+function incoming(user, data) {
+	if (!apiKey) {
 		return;
 	}
 
-	const { request, session } = data;
-	const { user_id } = session;
-	const { payload, command } = request;
+	const { payload, command } = data.request;
 
-	let msg = {
-		text: command || '',
-		userId: user_id
-	};
-
+	let res;
 	if (payload && payload.value) {
-		msg.postback = {
-			buttonClick: {
-				buttonId: payload.value
-			}
-		};
+		switch (payload.value) {
+			case PAYLOAD_MORE:
+				res = '[PAYLOAD_MORE]';
+				break;
+
+			case PAYLOAD_TWO_IN_ROW:
+				res = '[PAYLOAD_TWO_IN_ROW]';
+				break;
+
+			case PAYLOAD_THREE_IN_ROW:
+				res = '[PAYLOAD_THREE_IN_ROW]';
+				break;
+
+			default:
+				res = '[UNKNOWN_PAYLOAD]';
+		}
+	} else if (command) {
+		res = command;
+	} else {
+		res = '<<empty>>'
 	}
 
-	service.logIncoming(msg);
+	send(user, res, false);
 }
 
-function outgoing(data) {
-	if (!service) {
+function outgoing(user, data) {
+	if (!apiKey) {
 		return;
 	}
 
-	const { response, session } = data;
-	const { text, buttons } = response;
-	const { user_id } = session;
+	const { text, buttons } = data.response;
 
-	let msg = {
-		text,
-		userId: user_id
-	};
-
+	let res = text;
 	if (buttons) {
-		msg.buttons = buttons.map(button => ({
-			id: button.payload.value,
-			label: button.title,
-			value: ''
-		}));
+		res += '\n' + buttons.map(button => `[${button.title}]`).join('');
 	}
 
-	service.logOutgoing(msg);
+	send(user, res, true);
+}
+
+function send(user, text, is_sender_bot) {
+	const { id, name } = user;
+	const body = {
+		is_sender_bot,
+		user: {
+			id,
+			name: name || 'UNKNOWN'
+		},
+		message: {
+			timestamp: Date.now(),
+			text
+		}
+	};
+
+	fetch(
+		'https://api.botanalytics.co/v1/messages/generic/',
+		{
+			method: 'POST',
+			body: JSON.stringify(body),
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': `Token ${apiKey}`
+			}
+		}
+	);
 }

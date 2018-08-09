@@ -4,9 +4,6 @@ module.exports = {
 	DB_PIES_BEST: 'pies_best',
 	DB_PIES_SEARCH: 'pies_search',
 
-	USER_FLAG_PROPOSE_ROW: 1,
-	USER_FLAG_PROPOSE_SEARCH: 2,
-
 	STEP_NEW_USER: 0,
 	STEP_NAME: 1,
 	STEP_MAIN: 2,

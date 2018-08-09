@@ -1,4 +1,4 @@
-const { nextStep, setUserFlag, checkUserFlag, checkCommand, initSearch } = require('./utils');
+const { nextStep, checkCommand, initSearch } = require('./utils');
 const {
 	STEP_NEW_USER,
 	STEP_NAME,
@@ -11,9 +11,7 @@ const {
 	STEP_UNKNOWN,
 	PAYLOAD_MORE,
 	PAYLOAD_TWO_IN_ROW,
-	PAYLOAD_THREE_IN_ROW,
-	USER_FLAG_PROPOSE_ROW,
-	USER_FLAG_PROPOSE_SEARCH
+	PAYLOAD_THREE_IN_ROW
 } = require('./constants');
 const stepNewUser = require('./handlers/step-new-user');
 const stepName = require('./handlers/step-name');
