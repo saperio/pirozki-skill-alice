@@ -41,8 +41,8 @@ const waitTetxtList = [
 ];
 
 function waitText() {
-	const text = waitTetxtList[Math.floor(Math.random() * waitTetxtList.length)];
-	const tts = text
+	const tts = waitTetxtList[Math.floor(Math.random() * waitTetxtList.length)];
+	const text = tts
 		.replace(/\+/g, '')
 		.replace(/ -/g, '')
 	;
